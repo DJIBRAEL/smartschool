@@ -31,11 +31,11 @@ app.use(morgan("dev"));
 // Servir les fichiers uploadés
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
 
-app.get(["/health", "/api/health"], (req, res) => res.json({ status: "ok", service: "SmartSchool API" }));
+if (process.env.NODE_ENV === "production" || process.env.RENDER) { const buildPath = path.join(__dirname, "../../web/dist"); app.use(express.static(buildPath)); } app.get(["/health", "/api/health"], (req, res) => res.json({ status: "ok", service: "SmartSchool API" }));
 app.use("/api/v1/auth",authRoutes);
 app.use("/api/v1",auth,dashboardRoutes);
 app.use("/api/v1",auth,crudRoutes);
 
-app.use((err,req,res,next)=>{console.error(err);res.status(500).json({message:"Erreur interne du serveur"});});
+if (process.env.NODE_ENV === "production" || process.env.RENDER) { app.get("*", (req, res) => { res.sendFile(path.join(__dirname, "../../web/dist/index.html")); }); } app.use((err,req,res,next)=>{console.error(err);res.status(500).json({message:"Erreur interne du serveur"});});
 const port=process.env.PORT||3001;
 app.listen(port,()=>console.log(`SmartSchool API: http://localhost:${port}/api/health`));

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "npm run dev --prefix web",
+    "postinstall": "npm install --prefix api && npm install --prefix web && npm run build", "build": "npm run build --prefix web && npm --prefix api run prisma:generate", "start": "npm --prefix api run start:prod",
     "dev": "npm run dev --prefix web",
     "dev:web": "npm run dev --prefix web",
     "dev:api": "npm run dev --prefix api",
