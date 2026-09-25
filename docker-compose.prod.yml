@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: smartschool-prod-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-smartschool_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_strong_password}
+      POSTGRES_DB: ${POSTGRES_DB:-smartschool}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - smartschool-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-smartschool_user} -d ${POSTGRES_DB:-smartschool}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: smartschool-prod-api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-smartschool_user}:${POSTGRES_PASSWORD:-change_this_strong_password}@db:5432/${POSTGRES_DB:-smartschool}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-generate_a_secure_random_jwt_secret_key_here}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+    ports:
+      - "3001:3001"
+    volumes:
+      - api_uploads:/app/public/uploads
+    networks:
+      - smartschool-network
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api/v1}
+    container_name: smartschool-prod-web
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    networks:
+      - smartschool-network
+
+volumes:
+  pgdata:
+  api_uploads:
+
+networks:
+  smartschool-network:
+    driver: bridge
